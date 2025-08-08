@@ -1,257 +1,292 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState , useEffect} from 'react';
 import {
   SafeAreaView,
   View,
+  Text,
+  TouchableOpacity,
   ScrollView,
-  Modal,
+  StyleSheet,
   Platform,
-  Animated
-} from 'react-native';
-import { styles } from './styles/Home_style';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { FontAwesome } from '@expo/vector-icons';
-
-// Import modular components
-import GoalHeader from '../assets/components/goal/GoalHeader';
-import GoalList from '../assets/components/goal/GoalList';
-import FloatingButtons from '../assets/components/goal/FloatingButtons';
-import NewGoalModal from '../assets/components/goal/NewGoalModal';
-import EmptyState from '../assets/components/goal/EmptyState';
-
-// Other tab screens
-const StatsScreen = () => {
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        <GoalHeader 
-          title="Statistics" 
-          subtitle="Track your progress" 
-          showToggle={false} 
-        />
-        <EmptyState 
-          message="Your goal statistics will appear here" 
-          buttonText="Go to Goals"
-          onPress={() => navigation.navigate('Home')}
-        />
-      </View>
-    </SafeAreaView>
-  );
-};
-
-const ProfileScreen = () => {
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        <GoalHeader 
-          title="Profile" 
-          subtitle="Your settings and info" 
-          showToggle={false} 
-        />
-        <EmptyState 
-          message="Your profile details will appear here" 
-          buttonText="Go to Goals"
-          onPress={() => navigation.navigate('Home')}
-        />
-      </View>
-    </SafeAreaView>
-  );
-};
-
-// Main Home Screen
-const HomeScreen = () => {
-  // State management
-  const [ongoingGoals, setOngoingGoals] = useState([]);
   
-  const [finishedGoals, setFinishedGoals] = useState([]);
+} from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import StatsScreen from './Stats'
+import MenuScreen from './Menu'
+import GoalScreen from './Goal'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import GoalStatistics from './Stats';
+import { useNavigation } from '@react-navigation/native';
 
-  const [activeView, setActiveView] = useState('ongoing');
-  const [showNewGoalModal, setShowNewGoalModal] = useState(false);
-  const [newGoalTitle, setNewGoalTitle] = useState('');
-  const [newGoalDescription, setNewGoalDescription] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const goalAnimations = useRef({ ongoing: [], finished: [] }).current;
+const api = 'http://192.168.5.4:3000'
 
-  // Update newest goal status
+export const HomeScreen = () => {
+  const navigation = useNavigation();
+  const [notificationsExpanded, setNotificationsExpanded] = useState(false);
+  const [username, setUsername] = useState(''); // Moved state inside component
+
+  const notifications = [
+    { id: 1, title: "New study reminder", message: "Math test tomorrow at 9 AM" },
+    { id: 2, title: "Trip approaching", message: "Your Paris trip is in 3 days" },
+    { id: 3, title: "Task completed", message: "Grocery shopping marked as done" }
+  ];
+
+  
+
+  const post_username = (user) => {
+    setUsername(user);
+  };
+
+  const get_user = async () => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      
+      if (!token) {
+        console.log('Failed to extract token');
+        return;
+      }
+      
+      console.log('Extracted token successfully');
+      const response = await fetch(`${api}/api/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const user_get = await response.json();
+      post_username(user_get.username);
+      await AsyncStorage.setItem('un', user_get.username)
+      await AsyncStorage.setItem('em', user_get.email)
+      console.log('Username:', username);
+      console.log('User data:', user_get);
+    } catch (error) {
+      console.log('Home screen failed to request username', error);
+    }
+  };
+
+  // Use useEffect to call async function once on mount
   useEffect(() => {
-    if (ongoingGoals.length === 0) return;
-    
-    setOngoingGoals(prev => prev.map((goal, index) => {
-      if (index === prev.length - 1) return { ...goal, status: 'new' };
-      if (goal.status === 'new' && index !== prev.length - 1) return { ...goal, status: 'conquering' };
-      return goal;
-    }));
-  }, [ongoingGoals.length]);
+    get_user();
 
-  // Initialize animations
-  useEffect(() => {
-    // Initialize ongoing goal animations
-    ongoingGoals.forEach((_, index) => {
-      if (!goalAnimations.ongoing[index]) {
-        goalAnimations.ongoing[index] = new Animated.Value(0);
-      }
-      Animated.timing(goalAnimations.ongoing[index], {
-          toValue: 1,
-          duration: 500 + index * 100,
-          useNativeDriver: true,
-        }).start();
-      }
-    );
+  }, []
+);
 
-    // Initialize finished goal animations
-    finishedGoals.forEach((_, index) => {
-      if (!goalAnimations.finished[index]) {
-        goalAnimations.finished[index] = new Animated.Value(0);
-        Animated.timing(goalAnimations.finished[index], {
-          toValue: 1,
-          duration: 500 + index * 100,
-          useNativeDriver: true,
-        }).start();
-      }
-    });
-  }, [ongoingGoals, finishedGoals]);
 
-  // Handlers passed as props to components
-  const handleAddGoal = () => {
-    setShowNewGoalModal(true);
-    setSelectedDate(new Date());
-  };
-
-  const removeOngoingGoal = (goalId) => {
-    setOngoingGoals(ongoingGoals.filter(goal => goal.id !== goalId)); 
-  };
-
-  const removeFinishedGoal = (goalId) => {
-    setFinishedGoals(finishedGoals.filter(goal => goal.id !== goalId)); 
-  };
-
-  const markAsFinished = (goalId) => {
-    const goalToFinish = ongoingGoals.find(goal => goal.id === goalId);
-    if (!goalToFinish) return;
-
-    setOngoingGoals(ongoingGoals.filter(goal => goal.id !== goalId));
-    setFinishedGoals([...finishedGoals, {
-      ...goalToFinish,
-      status: 'finished',
-      finishedDate: new Date()
-    }]);
-  };
-
-  const markAsOngoing = (goalId) => {
-    const goalToReactivate = finishedGoals.find(goal => goal.id === goalId);
-    if (!goalToReactivate) return;
-
-    setFinishedGoals(finishedGoals.filter(goal => goal.id !== goalId));
-    setOngoingGoals([...ongoingGoals, {
-      ...goalToReactivate,
-      status: 'conquering',
-      finishedDate: null
-    }]);
-  };
-
-  const addNewGoalWithDate = () => {
-    if (newGoalTitle.trim() === '') return;
-    
-    const newGoal = {
-      id: Date.now(),
-      title: newGoalTitle,
-      description: newGoalDescription,
-      status: "new",
-      updates: 0,
-      targetDate: selectedDate,
-      startDate: new Date()
-    };
-    
-    setOngoingGoals([...ongoingGoals, newGoal]);
-    setShowNewGoalModal(false);
-    setNewGoalTitle('');
-    setNewGoalDescription('');
-  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        <ScrollView style={styles.scrolling} contentContainerStyle={styles.scrollContent}>
-          <GoalHeader 
-            title="Goals" 
-            subtitle={activeView === 'ongoing' ? 'Track your progress' : 'Celebrate achievements'}
-            activeView={activeView}
-            setActiveView={setActiveView}
-            showToggle={true}
-          />
+    <SafeAreaView style={[globalStyles.safeArea, { backgroundColor: 'white' }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>Welcome back! {username}</Text>
+        </View>
 
-          {activeView === 'ongoing' ? (
-            ongoingGoals.length === 0 ? (
-              <EmptyState 
-                message="No ongoing goals yet! , Click the button below to add your goal!" 
-                color='white'
-                
-              />
-            ) : (
-              <GoalList 
-                goals={ongoingGoals}
-                animations={goalAnimations.ongoing}
-                type="ongoing"
-                onRemove={removeOngoingGoal}
-                onStatusChange={markAsFinished}
-              />
-            )
-          ) : (
-            finishedGoals.length === 0 ? (
-              <EmptyState 
-                message="No finished goals yet!" 
-                buttonText="View Ongoing Goals"
-                onPress={() => setActiveView('ongoing')}
-              />
-            ) : (
-              <GoalList 
-                goals={finishedGoals}
-                animations={goalAnimations.finished}
-                type="finished"
-                onRemove={removeFinishedGoal}
-                onStatusChange={markAsOngoing}
-              />
-            )
+        {/* Notification Bar */}
+        <TouchableOpacity
+          style={styles.notificationBar}
+          onPress={() => setNotificationsExpanded(!notificationsExpanded)}
+        >
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>Notifications</Text>
+            <FontAwesome 
+              name={notificationsExpanded ? "chevron-up" : "chevron-down"} 
+              size={18} 
+              color="#333" 
+            />
+          </View>
+
+          {notificationsExpanded && (
+            <View style={styles.notificationsList}>
+              {notifications.map(notification => (
+                <View key={notification.id} style={styles.notificationItem}>
+                  <Text style={styles.notificationItemTitle}>{notification.title}</Text>
+                  <Text style={styles.notificationItemMessage}>{notification.message}</Text>
+                </View>
+              ))}
+            </View>
           )}
-        </ScrollView>
-      </View>
+        </TouchableOpacity>
 
-      {activeView === 'ongoing' && (
-        <FloatingButtons 
-          onAdd={handleAddGoal}
-          onRemove={ongoingGoals.length > 0 ? () => removeOngoingGoal(ongoingGoals[ongoingGoals.length - 1].id) : null}
-          disabled={ongoingGoals.length === 0}
-        />
-      )}
+        {/* Paired Cards Section */}
+        <View style={styles.cardsContainer}>
+          {/* First pair */}
+          <View style={styles.cardPair}>
+            {/* Study Area Card */}
+            <TouchableOpacity style={styles.card} onPress={()=>navigation.navigate('Study')}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#EBF4FF' }]}>
+                <FontAwesome name="book" size={24} color="#4A6CF7" />
+              </View>
+              <Text style={styles.cardTitle}>Study Area</Text>
+              <Text style={styles.cardSubtitle}>Organize your learning</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
 
-      <NewGoalModal 
-        visible={showNewGoalModal}
-        onClose={() => setShowNewGoalModal(false)}
-        title={newGoalTitle}
-        setTitle={setNewGoalTitle}
-        description={newGoalDescription}
-        setDescription={setNewGoalDescription}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        showDatePicker={showDatePicker}
-        setShowDatePicker={setShowDatePicker}
-        onConfirm={addNewGoalWithDate}
-      />
+            {/* Trip Planning Card */}
+            <TouchableOpacity style={styles.card}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#E6F4EA' }]}>
+                <FontAwesome name="plane" size={24} color="#36B37E" />
+              </View>
+              <Text style={styles.cardTitle}>Trip Planning</Text>
+              <Text style={styles.cardSubtitle}>Plan your next adventure</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Second pair */}
+          <View style={styles.cardPair}>
+            {/* To Do List Card */}
+            <TouchableOpacity style={styles.card} onPress={()=> navigation.navigate('Task')}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#FFEBE6' }]}>
+                <FontAwesome name="list" size={24} color="#FF5630" />
+              </View>
+              <Text style={styles.cardTitle}>To Do List</Text>
+              <Text style={styles.cardSubtitle}>Manage your tasks</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
+
+            {/* Reminders Card */}
+            <TouchableOpacity style={styles.card}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#FFF8E6' }]}>
+                <FontAwesome name="bell" size={24} color="#FFAB00" />
+              </View>
+              <Text style={styles.cardTitle}>Reminders</Text>
+              <Text style={styles.cardSubtitle}>Never miss a thing</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
+
+const globalStyles = StyleSheet.create({
+  safeArea: {
+    // Add your global safe area styles here
+    flex: 1,
+  }
+});
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    padding: 20,
+  },
+  
+  // Header
+  header: {
+    marginBottom: 25,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  
+  // Notifications
+  notificationBar: {
+    backgroundColor: '#F5F7FA',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 25,
+    shadowColor: '#00000010',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  notificationTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  notificationsList: {
+    marginTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingTop: 15,
+  },
+  notificationItem: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  notificationItemTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  notificationItemMessage: {
+    fontSize: 14,
+    color: '#666',
+  },
+  
+  // Cards layout
+  cardsContainer: {
+    gap: 15,
+  },
+  cardPair: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  card: {
+    flex: 1, // Equal width for paired cards
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 18,
+    shadowColor: '#00000015',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  cardIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 5,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 15,
+  },
+  cardArrow: {
+    alignSelf: 'flex-end',
+  },
+});
+
+
+
 
 const Tab = createBottomTabNavigator();
-// Main App component with tab navigation
+
 export default function App() {
+
   return (
-   
     <Tab.Navigator
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: '#1F2937',
-            borderTopColor: '#374151',
+            backgroundColor: '#ffffffff',
+            borderTopColor: '#333333ff',
             paddingBottom: Platform.OS === 'ios' ? 15 : 5,
             paddingTop: Platform.OS === 'ios' ? 15 : 5,
           },
@@ -262,7 +297,7 @@ export default function App() {
       >
         <Tab.Screen 
           name="Home" 
-          component={HomeScreen} 
+          component={HomeScreen}
           options={{
             tabBarIcon: ({ color, size }) => (
               <FontAwesome name="home" size={size} color={color} />
@@ -270,24 +305,37 @@ export default function App() {
           }}
         />
         <Tab.Screen 
+          name="Goal" 
+          component={GoalScreen} 
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="bullseye" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
           name="Stats" 
-          component={StatsScreen} 
+          component={GoalStatistics} 
           options={{
             tabBarIcon: ({ color, size }) => (
               <FontAwesome name="bar-chart" size={size} color={color} />
             ),
           }}
         />
+
         <Tab.Screen 
-          name="Profile" 
-          component={ProfileScreen} 
+          name="More" 
+          component={MenuScreen} 
           options={{
             tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="user" size={size} color={color} />
+              <FontAwesome name="list" size={size} color={color} />
             ),
           }}
         />
+
+
+
     </Tab.Navigator>
-    
   );
 }
+

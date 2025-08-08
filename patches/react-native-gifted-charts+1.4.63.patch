@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-gifted-charts/dist/Components/common/LinearGradient.js b/node_modules/react-native-gifted-charts/dist/Components/common/LinearGradient.js
+index a062747..a1deddd 100644
+--- a/node_modules/react-native-gifted-charts/dist/Components/common/LinearGradient.js
++++ b/node_modules/react-native-gifted-charts/dist/Components/common/LinearGradient.js
+@@ -1,15 +1,9 @@
+-var LinearGradient;
+-try {
+-    // for bare react-native projects
+-    LinearGradient = require('react-native-linear-gradient').LinearGradient;
+-}
+-catch (e) {
+-    try {
+-        // for expo-based projects
+-        LinearGradient = require('expo-linear-gradient').LinearGradient;
+-    }
+-    catch (e) {
+-        throw new Error('Gradient package was not found. Make sure "react-native-linear-gradient" or "expo-linear-gradient" is installed');
+-    }
++// Force use of Expo's gradient (simplest solution for Expo projects)
++import LinearGradient from 'expo-linear-gradient';
++
++// Validate the import
++if (!LinearGradient) {
++  throw new Error('expo-linear-gradient is not installed. Run: npx expo install expo-linear-gradient');
+ }
++
+ export default LinearGradient;
+\ No newline at end of file

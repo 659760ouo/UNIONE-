@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable, Image } from 'react-native';
-import { styles } from '../../../app/styles/Home_style';
+import { styles } from '../../../app/styles/Main_style';
 
 const FloatingButtons = ({ onAdd, onRemove, disabled }) => {
   const add_icon = require('../../images/add.png');

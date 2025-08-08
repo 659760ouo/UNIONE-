@@ -1,21 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Animated, Pressable, Text } from 'react-native';
-import { styles } from '../../../app/styles/Home_style';
+import { styles } from '../../../app/styles/Main_style';
 import { Entypo } from '@expo/vector-icons';
+
 // import GoalCard from './GoalCard';
+
 
 // Helper functions
 const formatDate = (date) => {
   if (!date) return '';
+  const dateObj = new Date(date);
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
-  return date.toLocaleDateString('en-US', options);
+  return dateObj.toLocaleDateString('en-US', options);
 };
+
+
 
 const calculateDaysDifference = (start, end) => {
   if (!start || !end) return 0;
+  const s = new Date(start)
+  const e = new Date(end)
   const msPerDay = 1000 * 60 * 60 * 24;
-  const startMs = start.getTime();
-  const endMs = end.getTime();
+  const startMs = s.getTime();
+  const endMs = e.getTime();
   return Math.round(Math.abs(endMs - startMs) / msPerDay);
 };
 
@@ -39,10 +46,13 @@ const renderStatusPill = (status) => {
   );
 };
 
-const GoalList = ({ goals, animations, type, onRemove, onStatusChange }) => {
+const GoalList = ({ goals, animations, type, onRemove, onStatusChange , isFinished}) => {
   const { width } = require('react-native').Dimensions.get('window');
   
+
+ 
   return (
+    
     <View style={styles.goalListContainer}>
       {goals.map((goal, index) => {
         if (!animations[index]) {

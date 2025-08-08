@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { styles } from '../../../app/styles/Home_style';
+import { styles } from '../../../app/styles/Main_style';
 
 const GoalHeader = ({ title, subtitle, activeView, setActiveView, showToggle }) => {
   return (

@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   ScrollView
 } from 'react-native';
-import { styles } from '../../../app/styles/Home_style';
+import { styles } from '../../../app/styles/Main_style';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -54,7 +54,7 @@ const NewGoalModal = ({
       <KeyboardAvoidingView
         style={styles.modalOverlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={100}
+        keyboardVerticalOffset={50}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View style={styles.modalContainer}>

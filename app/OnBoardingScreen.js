@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import SwipeDot from '../assets/components/SwipeDot'; // 确保路径正确
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -19,21 +20,21 @@ const { width } = Dimensions.get('window');
 export const onboardingData = [
   {
     id: 1,
-    image: require('../assets/images/favicon.png'),
-    title: 'Simple Goal Management',
+    image: require('../assets/images/Goal.png'),
+    title: 'Goal Management',
     description: 'Create and track your goals with an intuitive interface.',
   },
   {
     id: 2,
-    image: require('../assets/images/gradient_bkg.png'),
-    title: 'Progress Tracking',
-    description: 'Visualize your progress with charts and statistics.',
+    image: require('../assets/images/Study.png'),
+    title: 'Study Area',
+    description: 'Embark your academic journey with motivation.',
   },
   {
     id: 3,
-    image: require('../assets/images/fade_bkg.png'),
-    title: 'Personalized Reminders',
-    description: 'Set custom reminders to stay on track with your goals.',
+    image: require('../assets/images/More.png'),
+    title: 'More extended features',
+    description: 'Such as to do list , trip planning and financial management'
   },
 ];
 
@@ -81,9 +82,16 @@ const OnboardingScreen = () => {
   };
 
   // 处理点击"Get Started"
-  const handleGetStarted = () => {
+  const handleGetStarted = async() => {
+    try{
+      
+      await AsyncStorage.setItem('hasCompleteOnboarding', 'true')
+      navigation.navigate('Log');
 
-    navigation.navigate('Home');
+    }catch(error){
+      console.log('error when saving onboarding status', error)
+    }
+    navigation.navigate('Log');
   };
 
   // 滚动到指定页面

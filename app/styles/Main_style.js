@@ -1,16 +1,16 @@
-import { StyleSheet } from 'react-native';
-const { width } = require('react-native').Dimensions.get('window');
+import { Dimensions, StyleSheet } from 'react-native';
+const {width} = Dimensions.get('window')
 
 export const styles = StyleSheet.create({
   // Main container styles
   safeArea: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#ffffffff',
   },
   background: {
     flex: 1,
     width: width,
-    backgroundColor: '#111827',
+    backgroundColor: '#ffffffff',
   },
   scrolling: {
     flex: 1,
@@ -22,17 +22,23 @@ export const styles = StyleSheet.create({
 
   // Header styles
   header: {
-    marginBottom: 30,
+    marginBottom: 50,
+    paddingLeft: 20,
+    top: '5%',
+    
   },
   headerTitle: {
     fontSize: 32,
+    width: '50%',
     fontWeight: 'bold',
-    color: 'white',
+    color: 'black',
+    left: '5%'
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: 'black',
     marginTop: 4,
+    marginLeft: 15,
     marginBottom: 20,
   },
 
@@ -52,7 +58,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeToggleButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#2b2e30',
   },
   toggleText: {
     color: 'white',
@@ -67,7 +73,7 @@ export const styles = StyleSheet.create({
   },
   goalCard: {
     width: width - 40,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#212638ff',
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
@@ -291,10 +297,24 @@ export const styles = StyleSheet.create({
   },
 
   emptyStateText:{
-    color: 'white',
+    color: 'black',
     fontSize: 15,
     fontWeight: 'bold',
     
+  },
+  orderPick_container:{ 
+    width: '90%',
+    
+    height: 45,
+    backgroundColor: '#d9d9d9',
+    borderRadius: 99,
+    marginBottom: 15,
+    overflow: 'hidden',
+    
+  },
+  sortPicker: {
+    top: '-5%',
+    left: '2%'
   }
 
 })
