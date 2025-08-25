@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { styles } from '../../../app/styles/Main_style';
 
 const GoalHeader = ({ title, subtitle, activeView, setActiveView, showToggle }) => {
@@ -14,13 +13,15 @@ const GoalHeader = ({ title, subtitle, activeView, setActiveView, showToggle }) 
             style={[styles.toggleButton, activeView === 'ongoing' && styles.activeToggleButton]}
             onPress={() => setActiveView('ongoing')}
           >
-            <Text style={styles.toggleText}>Ongoing</Text>
+            <Text style={[styles.toggleText, activeView === 'ongoing' && {color: 'white'
+            }]}>Ongoing</Text>
           </Pressable>
           <Pressable
             style={[styles.toggleButton, activeView === 'finished' && styles.activeToggleButton]}
             onPress={() => setActiveView('finished')}
           >
-            <Text style={styles.toggleText}>Finished</Text>
+            <Text style={[styles.toggleText, activeView === 'finished' && {color: 'white'
+            }]}>Finished</Text>
           </Pressable>
         </View>
       )}

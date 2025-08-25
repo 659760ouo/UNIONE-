@@ -1,22 +1,20 @@
-import React, { useState , useEffect} from 'react';
+import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 import {
+  Platform,
   SafeAreaView,
-  View,
-  Text,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Platform,
-  
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import StatsScreen from './Stats'
-import MenuScreen from './Menu'
-import GoalScreen from './Goal'
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import GoalScreen from './Goal';
+import MenuScreen from './Menu';
 import GoalStatistics from './Stats';
-import { useNavigation } from '@react-navigation/native';
 
 const api = 'http://192.168.5.4:3000'
 

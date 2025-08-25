@@ -1,18 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  Pressable,
   SafeAreaView,
-  View,
   ScrollView,
   Text,
   TextInput,
-  Pressable,
-  Modal,
-  FlatList,
-  Dimensions
+  View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
+
 import styles from '../app/styles/Study_style';
+import UniversalManageModal from './MangModal'; // Import the universal modal
 
 // Type definitions
 type Book = {
@@ -93,6 +96,14 @@ const StudyArea = () => {
   const [newFlashcard, setNewFlashcard] = useState({ question: '', answer: '' });
   const [newVocab, setNewVocab] = useState({ word: '', meaning: '', example: '' });
   const [newBook, setNewBook] = useState({ title: '', subject: '', theme: 'rounded' });
+
+  // Management modals state
+  const [manageFlashcardsModal, setManageFlashcardsModal] = useState(false);
+  const [manageVocabModal, setManageVocabModal] = useState(false);
+  const [selectedFlashcards, setSelectedFlashcards] = useState<string[]>([]);
+  const [selectedVocab, setSelectedVocab] = useState<string[]>([]);
+  const [editingFlashcard, setEditingFlashcard] = useState<{id: string; question: string; answer: string} | null>(null);
+  const [editingVocab, setEditingVocab] = useState<Vocabulary | null>(null);
 
   // Timer reference
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -248,6 +259,144 @@ const StudyArea = () => {
     setSelectedBook(book);
     setCurrentFlashcardIndex(0);
     setShowFlashcardAnswer(false);
+    setSelectedFlashcards([]);
+  };
+
+  // Flashcard management functions
+  const toggleFlashcardSelection = (id: string) => {
+    setSelectedFlashcards(prev => 
+      prev.includes(id)
+        ? prev.filter(flashcardId => flashcardId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const selectAllFlashcards = () => {
+    if (!selectedBook) return;
+    if (selectedFlashcards.length === selectedBook.flashcards.length) {
+      setSelectedFlashcards([]);
+    } else {
+      setSelectedFlashcards(selectedBook.flashcards.map(fc => fc.id));
+    }
+  };
+
+  const deleteSelectedFlashcards = () => {
+  if (!selectedBook || selectedFlashcards.length === 0) return;
+
+  // Show confirmation alert
+  Alert.alert(
+    "Confirm Deletion",
+    `Are you sure you want to delete ${selectedFlashcards.length} flashcard(s)? This action cannot be undone.`,
+    [
+      { text: "Cancel", style: "cancel" },
+      { 
+        text: "Delete", 
+        style: "destructive", 
+        onPress: () => {
+          // Proceed with deletion only if user confirms
+          const updatedBooks = books.map(book => {
+            if (book.id === selectedBook.id) {
+              return {
+                ...book,
+                flashcards: book.flashcards.filter(fc => !selectedFlashcards.includes(fc.id))
+              };
+            }
+            return book;
+          });
+
+          setBooks(updatedBooks);
+          setSelectedBook(prev => prev 
+            ? { ...prev, flashcards: prev.flashcards.filter(fc => !selectedFlashcards.includes(fc.id)) } 
+            : null
+          );
+          setSelectedFlashcards([]);
+          setCurrentFlashcardIndex(0);
+          setManageFlashcardsModal(false); // Close modal after deletion
+        }
+      }
+    ]
+  );
+  };
+
+  const startEditingFlashcard = (flashcard: {id: string; question: string; answer: string}) => {
+    setEditingFlashcard({...flashcard});
+  };
+
+  const saveEditedFlashcard = () => {
+    if (!selectedBook || !editingFlashcard) return;
+
+    const updatedBooks = books.map(book => {
+      if (book.id === selectedBook.id) {
+        return {
+          ...book,
+          flashcards: book.flashcards.map(fc => 
+            fc.id === editingFlashcard.id ? editingFlashcard : fc
+          )
+        };
+      }
+      return book;
+    });
+
+    setBooks(updatedBooks);
+    setSelectedBook(prev => prev 
+      ? { ...prev, flashcards: prev.flashcards.map(fc => 
+          fc.id === editingFlashcard.id ? editingFlashcard : fc
+        )} 
+      : null
+    );
+    setEditingFlashcard(null);
+  };
+
+  // Vocabulary management functions
+  const toggleVocabSelection = (id: string) => {
+    setSelectedVocab(prev => 
+      prev.includes(id)
+        ? prev.filter(vocabId => vocabId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const selectAllVocab = () => {
+    if (selectedVocab.length === vocabulary.length) {
+      setSelectedVocab([]);
+    } else {
+      setSelectedVocab(vocabulary.map(v => v.id));
+    }
+  };
+
+  const deleteSelectedVocab = () => {
+  if (selectedVocab.length === 0) return;
+
+  Alert.alert(
+    "Confirm Deletion",
+    `Delete ${selectedVocab.length} vocabulary term(s)? This cannot be undone.`,
+    [
+      { text: "Cancel", style: "cancel" },
+      { 
+        text: "Delete", 
+        style: "destructive", 
+        onPress: () => {
+          // Proceed with deletion only if confirmed
+          setVocabulary(vocabulary.filter(v => !selectedVocab.includes(v.id)));
+          setSelectedVocab([]);
+          setManageVocabModal(false); // Close modal after deletion
+        }
+      }
+    ]
+  );
+  };
+
+  const startEditingVocab = (vocab: Vocabulary) => {
+    setEditingVocab({...vocab});
+  };
+
+  const saveEditedVocab = () => {
+    if (!editingVocab) return;
+
+    setVocabulary(vocabulary.map(v => 
+      v.id === editingVocab.id ? editingVocab : v
+    ));
+    setEditingVocab(null);
   };
 
   // Create sections for FlatList
@@ -349,7 +498,15 @@ const StudyArea = () => {
 
               {/* Flashcards */}
               <View style={styles.flashcardSection}>
-                <Text style={styles.sectionTitle}>Flashcards</Text>
+                <View style={styles.vocabHeader}>
+                  <Text style={styles.sectionTitle}>Flashcards</Text>
+                  <Pressable 
+                    style={styles.fabButton}
+                    onPress={() => setManageFlashcardsModal(true)}
+                  >
+                    <Ionicons name="grid" size={24} color="white" />
+                  </Pressable>
+                </View>
                 
                 {selectedBook?.flashcards.length ? (
                   <View style={styles.flashcardContainer}>
@@ -429,12 +586,12 @@ const StudyArea = () => {
         return (
           <View style={styles.vocabSection}>
             <View style={styles.vocabHeader}>
-              <Text style={styles.sectionTitle}>Vocabulary</Text>
+              <Text style={styles.sectionTitle}>Vocabulary/Keywords</Text>
               <Pressable 
                 style={styles.fabButton}
-                onPress={() => setVocabModal(true)}
+                onPress={() => setManageVocabModal(true)}
               >
-                <Ionicons name="add" size={24} color="white" />
+                <Ionicons name="grid" size={24} color="white" />
               </Pressable>
             </View>
             
@@ -452,6 +609,13 @@ const StudyArea = () => {
               style={styles.vocabList}
               nestedScrollEnabled
             />
+
+            <Pressable 
+              style={[styles.formButton, { marginTop: 15 }]}
+              onPress={() => setVocabModal(true)}
+            >
+              <Text style={styles.formButtonText}>Add New Vocabulary</Text>
+            </Pressable>
           </View>
         );
 
@@ -466,118 +630,127 @@ const StudyArea = () => {
         data={getSections()}
         keyExtractor={item => item.id}
         renderItem={renderItem}
-        contentContainerStyle={styles.mainContent}
-        showsVerticalScrollIndicator={true}
+        nestedScrollEnabled
       />
 
-      {/* Modals remain the same */}
-      <Modal
-        visible={newBookModal}
-        animationType="slide"
-        transparent
-      >
-        {/* Modal content unchanged */}
+      {/* New Book Modal */}
+      <Modal visible={newBookModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New Book</Text>
-            
+            <Text style={styles.modalTitle}>Add New Book</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="Book Title"
               value={newBook.title}
               onChangeText={text => setNewBook(prev => ({ ...prev, title: text }))}
             />
-            
             <TextInput
               style={styles.modalInput}
               placeholder="Subject"
               value={newBook.subject}
               onChangeText={text => setNewBook(prev => ({ ...prev, subject: text }))}
             />
-            
             <View style={styles.themeSelector}>
-              <Text style={styles.themeLabel}>Book Theme:</Text>
+              <Text style={styles.themeLabel}>Select Theme</Text>
               <Picker
                 selectedValue={newBook.theme}
                 style={styles.picker}
-                onValueChange={(value) => 
-                  setNewBook(prev => ({ ...prev, theme: value as 'rounded' | 'sharp' | 'dotted' }))
+                onValueChange={(itemValue) =>
+                  setNewBook(prev => ({ ...prev, theme: itemValue as 'rounded' | 'sharp' | 'dotted' }))
                 }
               >
-                <Picker.Item label="Rounded Edges" value="rounded" />
-                <Picker.Item label="Sharp Edges" value="sharp" />
-                <Picker.Item label="Dotted Edges" value="dotted" />
+                <Picker.Item label="Rounded" value="rounded" />
+                <Picker.Item label="Sharp" value="sharp" />
+                <Picker.Item label="Dotted" value="dotted" />
               </Picker>
             </View>
-            
             <View style={styles.modalButtons}>
-              <Pressable 
-                style={styles.modalButton}
-                onPress={() => setNewBookModal(false)}
-              >
+              <Pressable style={styles.modalButton} onPress={() => setNewBookModal(false)}>
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </Pressable>
-              
-              <Pressable 
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={addBook}
-              >
-                <Text style={[styles.modalButtonText, styles.confirmText]}>Create</Text>
+              <Pressable style={[styles.modalButton, styles.confirmButton]} onPress={addBook}>
+                <Text style={[styles.modalButtonText, styles.confirmText]}>Add Book</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
-      <Modal
-        visible={vocabModal}
-        animationType="slide"
-        transparent
-      >
-        {/* Modal content unchanged */}
+      {/* Add Vocabulary Modal */}
+      <Modal visible={vocabModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add New Vocabulary</Text>
-            
             <TextInput
               style={styles.modalInput}
               placeholder="Word"
               value={newVocab.word}
               onChangeText={text => setNewVocab(prev => ({ ...prev, word: text }))}
             />
-            
             <TextInput
               style={styles.modalInput}
               placeholder="Meaning"
               value={newVocab.meaning}
               onChangeText={text => setNewVocab(prev => ({ ...prev, meaning: text }))}
             />
-            
             <TextInput
               style={styles.modalInput}
               placeholder="Example sentence"
               value={newVocab.example}
               onChangeText={text => setNewVocab(prev => ({ ...prev, example: text }))}
             />
-            
             <View style={styles.modalButtons}>
-              <Pressable 
-                style={styles.modalButton}
-                onPress={() => setVocabModal(false)}
-              >
+              <Pressable style={styles.modalButton} onPress={() => setVocabModal(false)}>
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </Pressable>
-              
-              <Pressable 
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={addVocabulary}
-              >
-                <Text style={[styles.modalButtonText, styles.confirmText]}>Add Word</Text>
+              <Pressable style={[styles.modalButton, styles.confirmButton]} onPress={addVocabulary}>
+                <Text style={[styles.modalButtonText, styles.confirmText]}>Add Vocabulary</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
+
+      {/* Universal Management Modals */}
+      <UniversalManageModal
+        visible={manageFlashcardsModal}
+        type="flashcards"
+        items={selectedBook?.flashcards || []}
+        selectedItems={selectedFlashcards}
+        editingItem={editingFlashcard}
+        onClose={() => setManageFlashcardsModal(false)}
+        onToggleItem={toggleFlashcardSelection}
+        onSelectAll={selectAllFlashcards}
+        onDeleteSelected={deleteSelectedFlashcards}
+        onStartEditing={startEditingFlashcard}
+        onSaveEditing={saveEditedFlashcard}
+        onCancelEditing={() => setEditingFlashcard(null)}
+        onChangeEditing={(field, value) => {
+          if (editingFlashcard) {
+            setEditingFlashcard(prev => prev && ({ ...prev, [field]: value }));
+          }
+        }}
+      />
+
+      <UniversalManageModal
+        visible={manageVocabModal}
+        type="vocabulary"
+        items={vocabulary}
+        selectedItems={selectedVocab}
+        editingItem={editingVocab}
+        onClose={() => setManageVocabModal(false)}
+        onToggleItem={toggleVocabSelection}
+        onSelectAll={selectAllVocab}
+        onDeleteSelected={deleteSelectedVocab}
+        onStartEditing={startEditingVocab}
+        onSaveEditing={saveEditedVocab}
+        onCancelEditing={() => setEditingVocab(null)}
+        onChangeEditing={(field, value) => {
+          if (editingVocab) {
+            setEditingVocab(prev => prev && ({ ...prev, [field]: value }));
+          }
+        }}
+      />
     </SafeAreaView>
   );
 };

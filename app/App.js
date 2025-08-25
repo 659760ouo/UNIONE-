@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createStackNavigator } from '@react-navigation/stack';
-import OnboardingScreen from './OnBoardingScreen';
+import { useEffect, useState } from 'react';
 import HomeScreen from './Home';
 import LogPage from './Login';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
-import TodoList from './Task';
+import OnboardingScreen from './OnBoardingScreen';
 import StudyArea from './Study';
+import TodoList from './Task';
 
 const Stack = createStackNavigator();
 

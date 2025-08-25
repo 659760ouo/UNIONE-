@@ -143,7 +143,7 @@ const Log_style = StyleSheet.create({
         heigh: 70,
         margin: 10,
         backgroundColor: '#e6e4e4ff'
-   
+        
     },
     icon: {
         width: 55,

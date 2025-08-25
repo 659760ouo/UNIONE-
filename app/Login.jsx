@@ -1,26 +1,21 @@
-import {
-    SafeAreaView,
-    Modal,
-    TouchableOpacity,
-    View,
-    Text,
-    Button,
-    StyleSheet,
-    Animated,
-    Easing,
-    Alert,
-    Image
-} from 'react-native'
-import React, { useState, useRef, useEffect } from 'react'
-import { useNavigation } from '@react-navigation/native'
-import Log_style from './styles/Log_style'
-import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable } from 'react-native'
-import { TextInput } from 'react-native-gesture-handler'
-import { FontAwesome } from '@expo/vector-icons'
-import { Dimensions } from 'react-native'
+import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import styles from './styles/Main_style';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    Alert,
+    Animated,
+    Dimensions,
+    Easing,
+    Image,
+    Pressable,
+    SafeAreaView,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { TextInput } from 'react-native-gesture-handler';
+import Log_style from './styles/Log_style';
 
 const google = require('../assets/images/google.png')
 const fb = require('../assets/images/facebook.png')

@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     width: '40%',
+    marginLeft: 'auto',
   },
   addButtonText: {
     color: 'white',
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
+    
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -367,5 +369,162 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 15,
   },
+  // Add these to your existing styles
+moreOptionsButton: {
+  position: 'absolute',
+  top: 5,
+  right: 5,
+  padding: 5,
+},
+bookContent: {
+  flex: 1,
+  marginRight: 25, // Make space for the 3-dot menu
+},
+
+// Action Sheet styles
+actionSheetOverlay: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+},
+actionSheetContent: {
+  backgroundColor: 'white',
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  padding: 15,
+  width: '100%',
+},
+actionSheetItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: '#e2e8f0',
+},
+actionIcon: {
+  marginRight: 15,
+},
+actionSheetText: {
+  fontSize: 16,
+  color: '#2d3748',
+},
+deleteAction: {
+  borderBottomWidth: 1,
+  borderBottomColor: '#e2e8f0',
+},
+deleteActionText: {
+  fontSize: 16,
+  color: '#e53e3e',
+},
+cancelAction: {
+  padding: 15,
+  alignItems: 'center',
+},
+cancelActionText: {
+  fontSize: 16,
+  color: '#2d3748',
+  fontWeight: 'bold',
+},
+
+// Flashcard Bank styles
+flashcardBankButtonContainer: {
+  marginBottom: 20,
+},
+flashcardBankButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+  padding: 10,
+  backgroundColor: '#edf2f7',
+  borderRadius: 8,
+  alignSelf: 'flex-start',
+},
+squareGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  width: 36,
+  gap: 2,
+},
+square: {
+  width: 16,
+  height: 16,
+  backgroundColor: '#3182ce',
+  borderRadius: 2,
+},
+flashcardBankText: {
+  color: '#2d3748',
+  fontSize: 14,
+  fontWeight: '500',
+},
+flashcardBankList: {
+  maxHeight: 300,
+  marginVertical: 15,
+},
+flashcardBankItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 12,
+  borderBottomWidth: 1,
+  borderBottomColor: '#e2e8f0',
+  gap: 10,
+},
+checkbox: {
+  width: 24,
+  height: 24,
+  borderRadius: 4,
+  borderWidth: 2,
+  borderColor: '#cbd5e0',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+flashcardBankItemContent: {
+  flex: 1,
+},
+flashcardBankQuestion: {
+  fontSize: 15,
+  fontWeight: '500',
+  color: '#2d3748',
+  marginBottom: 4,
+},
+flashcardBankAnswer: {
+  fontSize: 13,
+  color: '#718096',
+},
+editButton: {
+  padding: 5,
+},
+deleteSelectedButton: {
+  alignSelf: 'flex-end',
+  padding: 8,
+  marginBottom: 10,
+},
+deleteSelectedText: {
+  color: '#e53e3e',
+  fontSize: 14,
+  fontWeight: '500',
+},
+flashcardManageModalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+  },
+  flashcardList: {
+    // Ensure items wrap to new row when needed
+    flexDirection: 'column', // Force vertical layout
+    gap: 10,
+    marginBottom: 15,
+  },
+  flashcardManageItem: {
+    width: '100%', // Full width of container
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+
 });
 export default styles
