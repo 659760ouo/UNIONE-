@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Checkbox } from 'expo-checkbox';
 import React from 'react';
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import styles from '../app/styles/Study_style';
+import styles from './styles/Study_style';
 
 // Type definitions
 type Flashcard = {

@@ -1,37 +1,37 @@
 {
   "expo": {
-    "name": "GoalTracker",
-    "slug": "GoalTracker",
-
+    "name": "unione",
+    "slug": "unione",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/unione.png",
     "scheme": "goaltracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
+    "sdkVersion": "53.0.0",
     "android": {
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.yrsdaily.unione"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/splash.png"
     },
-    
-
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -41,7 +41,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
-    
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cef43a3e-c20b-4067-a4e9-e6c1412678f2"
+      }
+    },
+    "owner": "yrsdaily"
   }
 }

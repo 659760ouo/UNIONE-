@@ -1,301 +1,118 @@
-import { FontAwesome } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
-import {
-    Alert,
-    Animated,
-    Dimensions,
-    Easing,
-    Image,
-    Pressable,
-    SafeAreaView,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
-import Log_style from './styles/Log_style';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from "@react-navigation/native";
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { auth } from "./service/firebase";
 
-const google = require('../assets/images/google.png')
-const fb = require('../assets/images/facebook.png')
+// Clear browser cache to prevent sign-in issues
+WebBrowser.maybeCompleteAuthSession();
 
+const LoginScreen = () => {
+  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  
+  // Configure Google auth request
+  const [request, response, promptAsync] = Google.useAuthRequest({
+     // From Google Cloud Console
+    webClientId: "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com", 
+     // From Google Cloud Console
+  });
 
-const api = 'http://192.168.5.4:3000'
-
-const LogPage = () => {
-    const navigation = useNavigation()
-    const [ActiveView, SetActiveView] = useState('Login')
-    const startpt = useRef(new Animated.Value(0)).current;
-    const [email, setEmail] = useState()
-    const [password , setPassword] = useState()
-    const [username , SetUsername] = useState()
-    const [logID , setLogID] = useState()
-    const [logPassword, setLogPassword] = useState()
-    const [error, setError] = useState()
-    const {width, height} = Dimensions.get('window')
-
-
-    const handlesignup = async () => {
-        try {
-            const response = await fetch(`${api}/api/signup`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password,
-                username: username
-            })
-            });
-
-            const data = await response.json();
-            if (!data.errors){
-                console.log('Signup response:', data);
-            }
-            else{
-                addAlert('Invalid Registration, Please make sure you fulfill the registration requirement!')
-            }
-
-            if (data.token) {
-                try {
-                    await AsyncStorage.setItem('auth_token', data.token);
-                    const profile = await fetch(`${api}/api/profile` , {
-                        method: 'GET',
-                        headers: {
-                           'Authorization': `Bearer ${data.token}`,
-                           'Content-Type': 'application/json'
-                        }
-                    })
-                    const user = profile.json()
-                    GoHome([user.username]);
-                }catch(error){
-                    console.log('Failed to fetch the profile', error)
-                }
-            } else {
-                setError(data.error || 'No token received');
-            }
-        } catch (error) {
-            setError('Network error occurred');
-        }
-    };
-
-    const addAlert = (msg) => {
-        Alert.alert('Error', msg ,[
-            {
-                text : 'OK',
-                onPress: () => console.log('OK button Pressed !') 
-            }
-            
-        ])
+  
+  // Handle Google Sign-In response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      handleFirebaseSignIn(id_token);
+    } else if (response?.type === 'error') {
+      Alert.alert("Login Failed", "Could not complete Google sign-in. Please try again.");
+      setLoading(false);
     }
+  }, [response]);
 
-    const handlesignin= async () => {
-        try {
-            const log_response = await fetch(`${api}/api/signin`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                logID : logID,
-                password: logPassword
-            })
-            });
-
-            const data = await log_response.json();
-            if (data.message){
-                console.log('error:', data.message)
-            }
-            console.log('Sign In response:', data);
-
-            if (data.token) {
-                try {
-                    await AsyncStorage.setItem('auth_token', data.token);
-                    const log_user = await fetch(`${api}/api/profile` , {
-                        method: 'GET',
-                        headers: {
-                           'Authorization': `Bearer ${data.token}`,
-                           'Content-Type': 'application/json'
-                        }
-                    })
-                    const logUser = log_user.json()
-                    GoHome([logUser.username]);
-                }catch(error){
-                    console.log('Failed to fetch the profile', error)
-                }
-            } else {
-                setError(data.error || 'No token received');
-            }
-        } catch (error) {
-            setError('Network error occurred');
-        }
-    };
-
-    const GoHome = (user) => {
-        navigation.navigate('Home')
+  // Sign in to Firebase with Google token
+  const handleFirebaseSignIn = async (idToken) => {
+    try {
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      // Navigate to home screen on success
+      navigation.navigate("Home");
+    } catch (error) {
+      console.error("Firebase sign-in error:", error);
+      Alert.alert("Login Failed", "Could not connect to your account. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    useEffect(() => {
-        const toValue = ActiveView === 'Login' ? 0 : 1;
-        Animated.timing(startpt, {
-            toValue,
-            duration: 500,
-            easing: Easing.ease,
-            useNativeDriver: false
-        }).start();
-    }, [ActiveView, startpt]);
+  // Trigger Google sign-in flow
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      await promptAsync();
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      Alert.alert("Error", "Could not start sign-in process. Please try again.");
+      setLoading(false);
+    }
+  };
 
-    return (
-        <SafeAreaView style={[Log_style.container]}>
-            {ActiveView === 'Register' &&
-                <View style={Log_style.requirements}>
-                    <Text style={Log_style.requ_txt}>
-                        Username must be 3-20 characters and 
-                    </Text>
-                    <Text style={Log_style.requ_txt}>
-                        might containing letters, numbers, and underscores.
-                    </Text>
-                    <Text style={Log_style.requ_txt}>
-                        Password must be at least 8 characters that 
-                    </Text>
-                    <Text style={Log_style.requ_txt}>
-                        containing a number and atleast 1 uppercase. 
-                    </Text>
-                </View>
-            }
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>GoalTracker</Text>
+      
+      <TouchableOpacity 
+        style={styles.googleButton} 
+        onPress={handleGoogleSignIn}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <>
+            <Ionicons name="logo-google" size={20} color="white" style={styles.icon} />
+            <Text style={styles.googleText}>Sign in with Google</Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+};
 
-            {/* Removed log_container and pill navigation */}
-            
-            <View id='enter-field' style={Log_style.enter_field}>
-                {ActiveView === 'Login' &&
-                    <Text style={Log_style.title}> Welcome Back !</Text>
-                }
-                
-                {ActiveView === 'Register' &&
-                    <React.Fragment>
-                        <Text style={Log_style.title}> Create Your Account!</Text>
-                        <TextInput
-                            style={Log_style.log_input}
-                            placeholder='Enter your username'
-                            placeholderTextColor='black'
-                            onChangeText={(txt) => SetUsername(txt)} 
-                        ></TextInput>
-                        <TextInput
-                            style={Log_style.log_input}
-                            placeholder='Enter your Email'
-                            placeholderTextColor='black'
-                            onChangeText={(txt) => setEmail(txt)} 
-                        />
-                        <TextInput
-                            style={Log_style.log_input}
-                            placeholder='Enter your password'
-                            placeholderTextColor='black'
-                            secureTextEntry
-                            onChangeText={(txt) => setPassword(txt)} 
-                        ></TextInput>
-                    </React.Fragment>
-                }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#fff"
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 50,
+    color: "#333"
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#4285F4",
+    padding: 12,
+    borderRadius: 8,
+    width: "100%",
+    justifyContent: "center"
+  },
+  icon: {
+    marginRight: 10
+  },
+  googleText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500"
+  }
+});
 
-                {ActiveView === 'Login' &&
-                    <React.Fragment>
-                        <TextInput
-                            style={Log_style.log_input}
-                            placeholder='Enter your username or email'
-                            placeholderTextColor='black'
-                            onChangeText={(txt) => setLogID(txt)} 
-                        />
-                        <TextInput
-                            style={Log_style.log_input}
-                            placeholder='Enter your password'
-                            placeholderTextColor='black'
-                            secureTextEntry
-                            onChangeText={(txt) => setLogPassword(txt)} 
-                        />
-                    </React.Fragment>
-                }
-
-                <View style={Log_style.log_btn}>
-                    {ActiveView === 'Login' &&
-                        <TouchableOpacity onPress={() => handlesignin()}>
-                            
-                                <Text id='login/register btn txt' style={Log_style.LR_txt}>Login</Text>
-                            
-                        </TouchableOpacity>
-                    }
-                    
-                    {ActiveView === 'Register' &&
-                        <TouchableOpacity onPress={() => handlesignup()}>
-                            <Text id='login/register btn txt' style={Log_style.LR_txt}>Register</Text>
-                        </TouchableOpacity>
-                    }
-                </View>
-
-                {/* Added toggle text under the button */}
-                <View style={Log_style.toggleTextContainer}>
-                    {ActiveView === 'Login' ? (
-                        <React.Fragment>
-                            <TouchableOpacity onPress={() => SetActiveView('Register')}>
-                                <Text style={Log_style.toggleText}>
-                                Don't have an account? Sign Up
-                                </Text>
-
-                            </TouchableOpacity>
-
-
-                            <View style={Log_style.icon_container}>
-                                <View style={[Log_style.iconView, , {borderLeftWidth: 3, borderColor: 'black'}]}> 
-                                    <Pressable>
-
-                                        <TouchableOpacity>
-                                            <Image style={
-
-                                                Log_style.icon} 
-                                                source={google} 
-                                            >
-                                            </Image>
-                                        </TouchableOpacity>
-
-                                    </Pressable>
-                                </View>
-                                
-                               <View style={[Log_style.iconView, {borderRightWidth: 3, borderColor: 'black'}]}> 
-                                    <Pressable>
-                                        <TouchableOpacity>
-                                            <Image style={Log_style.icon} source={fb} ></Image>
-                                        </TouchableOpacity>
-
-                                    </Pressable>
-                                </View>
-
-                            </View>
-                        </React.Fragment>
-
-
-                    ) : (
-                        
-                            <TouchableOpacity onPress={() => SetActiveView('Login')}>
-                                <Text style={Log_style.toggleText}>
-                                Already have an account? Sign In
-                                </Text>
-                            </TouchableOpacity>
-
-                    )}
-                </View>
-
-                {ActiveView === 'Login' &&
-                    <TouchableOpacity>
-                        <Text style={Log_style.key} >
-                            Forgot Your Password   <FontAwesome name='key' style={{ fontSize: 18, marginLeft: 30, color: '#a67202'}} />
-                        </Text>
-                    </TouchableOpacity>
-                }
-            </View>
-        </SafeAreaView>
-    )
-}
-
-
-
-export default LogPage
+export default LoginScreen;

@@ -1,113 +1,124 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import { auth, db } from "./service/firebase";
 
-const API_URL = 'http://192.168.5.4:3000/api';
+/**
+ * Get all goals for current user, ordered by creation time (newest first)
+ * @returns {Promise<Array>} List of user's goals
+ */
+export const getGoals = async () => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Please log in to view your goals");
+  }
 
+  try {
+    // Query: User's goals sorted by creation time (newest first)
+    const goalsQuery = query(
+      collection(db, "goals"),
+      where("userId", "==", user.uid), // Only current user's goals
+      orderBy("createdAt", "desc") // "desc" = descending (latest first)
+    );
 
-// Get auth token from storage (implement your storage solution)
-const getToken = async () => {
-  // Example using AsyncStorage
-  try{
-
-    const token = await AsyncStorage.getItem('auth_token');
-    if (token){
-      console.log(
-        'getToken method pass'
-      )
-    }
-    return token
-
-  }catch(err){
-
-    console.log('Failed to catch token in getToken method')
+    const snapshot = await getDocs(goalsQuery);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("getGoals error:", error);
+    throw new Error("Failed to load goals. Please try again.");
   }
 };
 
-export const goalService = {
-  // Get user's goals list
-  async getGoals() {
-    const token = await getToken();
-   try{
-      const response = await axios.get(`${API_URL}/goals`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type':'application/json' }
-      });
-
-      console.log('getGoal passed')
-      return response.data;
-   }catch(err){
-    console.log(
-      'Error getting Goals:', err
-    )
-   }
-  },
-
-  // Add new goal
-  async addGoal(goal) {
-    const token = await getToken();
-    try{
-      const response = await axios.post(`${API_URL}/goals`,  goal ,{
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'},
-      
-      });
-      console.log('addGoal passed')
-      return response.message;
-    }catch(err){
-      console.log('Error adding goal:', err)
-    }
-  },
-
-  // Update goal status
-  async updateGoal(id, updates) {
-    const token = await getToken();
-    if (!token) console.log('Failed to catch token in updateGoal')
-    
-    try{
-      const response = await axios.patch(`${API_URL}/goals/${id}`, updates, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      console.log('updateGoal passed', response)
-      return response.data.message;
-      
-    }catch(err){
-      console.log('Error updating status of goal:', err)
-    }
-  },
-
-  // Delete goal
-  async deleteGoal(id) {
-    const token = await getToken();
-    console.log('delete goal:', id)
-    try{
-      const response = await axios.delete(`${API_URL}/goals/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` , 'Content-Type': 'application/json'}
-      });
-      console.log('deleteGoal passed')
-      return response
-
-    }catch(err){
-      console.log('Error delete goal')
-    }
-  },
-
-
-  // Add this to the goalService object in Goalservice.js
-  async getCompletedGoalsStats() {
-    const token = await getToken();
-    try {
-      const response = await axios.get(`${API_URL}/goals/stats/completed`, {
-        headers: { 
-        'Authorization': `Bearer ${token}`, 
-        'Content-Type': 'application/json' 
-        }
-      });
-      console.log('getCompletedGoalsStats passed');
-      return response.data;
-    }catch (err) {
-      console.log('Error getting completed goals stats:', err);
-      throw err; // Re-throw to handle in component
-    }
+/**
+ * Add a new goal with creation timestamp
+ * @param {Object} goalData - Goal details (title, description, etc.)
+ * @returns {Promise<string>} New goal ID
+ */
+export const addGoal = async (goalData) => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Please log in to add a goal");
   }
 
+  if (!goalData.title) { // No deadline required anymore
+    throw new Error("Goal title is required");
+  }
 
+  try {
+    // Add goal with auto-generated creation timestamp
+    const docRef = await addDoc(collection(db, "goals"), {
+      ...goalData,
+      userId: user.uid,
+      completed: false,
+      createdAt: new Date() // Store exact creation time
+    });
 
+    return docRef.id;
+  } catch (error) {
+    console.error("addGoal error:", error);
+    throw new Error("Failed to add goal. Please try again.");
+  }
+};
+
+// Update and delete functions remain similar (no deadline references)
+export const updateGoal = async (goalId, updates) => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Please log in to update goals");
+  }
+
+  if (!goalId) {
+    throw new Error("Goal ID is required");
+  }
+
+  try {
+    const goalDoc = doc(db, "goals", goalId);
+    const goalSnapshot = await getDoc(goalDoc);
+
+    if (!goalSnapshot.exists() || goalSnapshot.data().userId !== user.uid) {
+      throw new Error("You don't have permission to update this goal");
+    }
+
+    await updateDoc(goalDoc, updates);
+  } catch (error) {
+    console.error("updateGoal error:", error);
+    throw new Error("Failed to update goal. Please try again.");
+  }
+};
+
+export const deleteGoal = async (goalId) => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Please log in to delete goals");
+  }
+
+  if (!goalId) {
+    throw new Error("Goal ID is required");
+  }
+
+  try {
+    const goalDoc = doc(db, "goals", goalId);
+    const goalSnapshot = await getDoc(goalDoc);
+
+    if (!goalSnapshot.exists() || goalSnapshot.data().userId !== user.uid) {
+      throw new Error("You don't have permission to delete this goal");
+    }
+
+    await deleteDoc(goalDoc);
+  } catch (error) {
+    console.error("deleteGoal error:", error);
+    throw new Error("Failed to delete goal. Please try again.");
+  }
 };

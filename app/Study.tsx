@@ -14,8 +14,8 @@ import {
   View
 } from 'react-native';
 
-import styles from '../app/styles/Study_style';
 import UniversalManageModal from './MangModal'; // Import the universal modal
+import styles from './styles/Study_style';
 
 // Type definitions
 type Book = {

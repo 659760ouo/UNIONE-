@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons'; // Make sure to install this
+import { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
-  View,
-  ScrollView,
+  Alert,
   Modal,
-  Text,
-  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
+  Text,
   TextInput,
-  Alert
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { styles as mainStyles } from './styles/Main_style';
-import { Ionicons } from '@expo/vector-icons'; // Make sure to install this
 
 // Import components
-import GoalHeader from '../assets/components/goal/GoalHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import GoalHeader from '../assets/components/goal/GoalHeader';
 
 const MenuScreen = ({ navigation }) => {
   // State for user info

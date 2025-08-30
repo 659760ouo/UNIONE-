@@ -1,22 +1,20 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   SafeAreaView,
-  View,
   ScrollView,
-  Modal,
-  Platform,
-  Animated
+  View
 } from 'react-native';
 import { styles } from './styles/Main_style';
 
 // Import modular components
+import { Picker } from '@react-native-picker/picker';
+import EmptyState from '../assets/components/goal/EmptyState';
+import FloatingButtons from '../assets/components/goal/FloatingButtons';
 import GoalHeader from '../assets/components/goal/GoalHeader';
 import GoalList from '../assets/components/goal/GoalList';
-import FloatingButtons from '../assets/components/goal/FloatingButtons';
 import NewGoalModal from '../assets/components/goal/NewGoalModal';
-import EmptyState from '../assets/components/goal/EmptyState';
 import { goalService } from './Goalservice';
-import { Picker } from '@react-native-picker/picker';
 
 // Main Home Screen
 const GoalScreen = () => {
