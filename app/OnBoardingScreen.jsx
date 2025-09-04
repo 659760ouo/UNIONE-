@@ -85,7 +85,7 @@ const OnboardingScreen = () => {
   const handleGetStarted = async() => {
     try{
       
-      await AsyncStorage.setItem('hasCompleteOnboarding', 'true')
+      await AsyncStorage.setItem('hasCompletedOnboarding', 'true')
       navigation.navigate('Log');
 
     }catch(error){

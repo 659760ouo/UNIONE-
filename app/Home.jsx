@@ -1,418 +1,338 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
+  Platform,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from "react-native";
-import { deleteGoal, getGoals, updateGoal } from "./Goalservice";
+  View,
+} from 'react-native';
+import GoalScreen from './Goal';
+import MenuScreen from './Menu';
+import GoalStatistics from './Stats';
 
-const HomeScreen = () => {
-  // State management
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const navigation = useNavigation();
+const api = 'http://192.168.5.4:3000'
 
-  // Load goals from Firestore
-  const loadGoals = async () => {
-    setError(null);
+export const HomeScreen = () => {
+  const navigation = useRouter();
+  const [notificationsExpanded, setNotificationsExpanded] = useState(false);
+  const [username, setUsername] = useState(''); // Moved state inside component
+
+  const notifications = [
+    { id: 1, title: "New study reminder", message: "Math test tomorrow at 9 AM" },
+    { id: 2, title: "Trip approaching", message: "Your Paris trip is in 3 days" },
+    { id: 3, title: "Task completed", message: "Grocery shopping marked as done" }
+  ];
+
+  
+
+  const post_username = (user) => {
+    setUsername(user);
+  };
+
+  const get_user = async () => {
     try {
-      const userGoals = await getGoals();
-      setGoals(userGoals);
-    } catch (err) {
-      setError(err.message);
-      Alert.alert("Error Loading Goals", err.message);
-      console.error("Goal loading error:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  // Initial load and refresh on navigation focus
-  useEffect(() => {
-    loadGoals();
-    const unsubscribe = navigation.addListener("focus", loadGoals);
-    return unsubscribe; // Cleanup listener
-  }, [navigation]);
-
-  // Pull-to-refresh handler
-  const handleRefresh = () => {
-    setRefreshing(true);
-    loadGoals();
-  };
-
-  // Handle goal deletion with confirmation
-  const handleDeleteGoal = async (goalId) => {
-    Alert.alert(
-      "Delete Goal",
-      "Are you sure you want to delete this goal? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteGoal(goalId);
-              // Update local state immediately for better UX
-              setGoals(goals.filter(goal => goal.id !== goalId));
-              Alert.alert("Success", "Goal deleted successfully");
-            } catch (err) {
-              Alert.alert("Deletion Failed", err.message);
-              console.error("Delete error:", err);
-            }
-          }
+      const token = await AsyncStorage.getItem('auth_token');
+      
+      if (!token) {
+        console.log('Failed to extract token');
+        return;
+      }
+      
+      console.log('Extracted token successfully');
+      const response = await fetch(`${api}/api/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]
-    );
-  };
-
-  // Handle goal completion toggle
-  const handleToggleCompletion = async (goalId, currentStatus) => {
-    try {
-      // Update Firestore
-      await updateGoal(goalId, { completed: !currentStatus });
-      // Update local state immediately
-      setGoals(goals.map(goal => 
-        goal.id === goalId ? { ...goal, completed: !currentStatus } : goal
-      ));
-    } catch (err) {
-      Alert.alert("Update Failed", err.message);
-      console.error("Toggle completion error:", err);
+      });
+      
+      const user_get = await response.json();
+      post_username(user_get.username);
+      await AsyncStorage.setItem('un', user_get.username)
+      await AsyncStorage.setItem('em', user_get.email)
+      console.log('Username:', username);
+      console.log('User data:', user_get);
+    } catch (error) {
+      console.log('Home screen failed to request username', error);
     }
   };
 
-  // Navigate to add goal screen
-  const handleAddGoal = () => {
-    navigation.navigate("AddGoal");
-  };
+  // Use useEffect to call async function once on mount
+  useEffect(() => {
+    get_user();
 
-  // Navigate to edit goal screen
-  const handleEditGoal = (goal) => {
-    navigation.navigate("EditGoal", { goal });
-  };
+  }, []
+);
 
-  // Loading state UI
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-        <Text style={styles.loadingText}>Loading your goals...</Text>
-      </View>
-    );
-  }
 
-  // Error state UI
-  if (error && goals.length === 0) {
-    return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle" size={48} color="#f44336" />
-        <Text style={styles.errorText}>Something went wrong</Text>
-        <Text style={styles.errorMessage}>{error}</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
-          onPress={loadGoals}
-        >
-          <Text style={styles.retryText}>Try Again</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
-  // Empty state UI
-  if (goals.length === 0) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Your Goals</Text>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={handleAddGoal}
-          >
-            <Ionicons name="add" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.emptyState}>
-          <Ionicons name="clipboard-outline" size={64} color="#cccccc" />
-          <Text style={styles.emptyTitle}>No goals yet!</Text>
-          <Text style={styles.emptySubtitle}>Start by adding your first goal</Text>
-          <TouchableOpacity 
-            style={styles.primaryButton}
-            onPress={handleAddGoal}
-          >
-            <Text style={styles.primaryButtonText}>Add New Goal</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // Main UI with goals list
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Your Goals</Text>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={handleAddGoal}
-          accessibilityLabel="Add new goal"
-        >
-          <Ionicons name="add" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={[globalStyles.safeArea, { backgroundColor: 'white' }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>Welcome back! {username}</Text>
+        </View>
 
-      <FlatList
-        data={goals}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.goalItem}>
-            {/* Completion checkbox */}
-            <TouchableOpacity
-              style={[styles.checkbox, item.completed && styles.checkboxChecked]}
-              onPress={() => handleToggleCompletion(item.id, item.completed)}
-              accessibilityLabel={item.completed ? "Mark as incomplete" : "Mark as complete"}
-            >
-              {item.completed && (
-                <Ionicons name="checkmark" size={20} color="white" />
-              )}
+        {/* Notification Bar */}
+        <TouchableOpacity
+          style={styles.notificationBar}
+          onPress={() => setNotificationsExpanded(!notificationsExpanded)}
+        >
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>Notifications</Text>
+            <FontAwesome 
+              name={notificationsExpanded ? "chevron-up" : "chevron-down"} 
+              size={18} 
+              color="#333" 
+            />
+          </View>
+
+          {notificationsExpanded && (
+            <View style={styles.notificationsList}>
+              {notifications.map(notification => (
+                <View key={notification.id} style={styles.notificationItem}>
+                  <Text style={styles.notificationItemTitle}>{notification.title}</Text>
+                  <Text style={styles.notificationItemMessage}>{notification.message}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Paired Cards Section */}
+        <View style={styles.cardsContainer}>
+          {/* First pair */}
+          <View style={styles.cardPair}>
+            {/* Study Area Card */}
+            <TouchableOpacity style={styles.card} onPress={()=>navigation.replace('/Study')}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#EBF4FF' }]}>
+                <FontAwesome name="book" size={24} color="#4A6CF7" />
+              </View>
+              <Text style={styles.cardTitle}>Study Area</Text>
+              <Text style={styles.cardSubtitle}>Organize your learning</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
             </TouchableOpacity>
 
-            {/* Goal details */}
-            <View style={styles.goalDetails}>
-              <Text 
-                style={[styles.goalTitle, item.completed && styles.completedGoalTitle]}
-              >
-                {item.title}
-              </Text>
-              
-              <View style={styles.goalMeta}>
-                <Text style={styles.creationDate}>
-                  Created: {new Date(item.createdAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </Text>
-                
-                {item.description && (
-                  <Text style={styles.goalDescription}>
-                    {item.description}
-                  </Text>
-                )}
+            {/* Trip Planning Card */}
+            <TouchableOpacity style={styles.card}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#E6F4EA' }]}>
+                <FontAwesome name="plane" size={24} color="#36B37E" />
               </View>
-            </View>
-
-            {/* Action buttons */}
-            <View style={styles.goalActions}>
-              <TouchableOpacity 
-                style={styles.editButton}
-                onPress={() => handleEditGoal(item)}
-                accessibilityLabel="Edit goal"
-              >
-                <Ionicons name="pencil" size={20} color="#2196F3" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.deleteButton}
-                onPress={() => handleDeleteGoal(item.id)}
-                accessibilityLabel="Delete goal"
-              >
-                <Ionicons name="trash" size={20} color="#f44336" />
-              </TouchableOpacity>
-            </View>
+              <Text style={styles.cardTitle}>Trip Planning</Text>
+              <Text style={styles.cardSubtitle}>Plan your next adventure</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
           </View>
-        )}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={["#4CAF50"]}
-          />
-        }
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+
+          {/* Second pair */}
+          <View style={styles.cardPair}>
+            {/* To Do List Card */}
+            <TouchableOpacity style={styles.card} onPress={()=> navigation.replace('/Task')}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#FFEBE6' }]}>
+                <FontAwesome name="list" size={24} color="#FF5630" />
+              </View>
+              <Text style={styles.cardTitle}>To Do List</Text>
+              <Text style={styles.cardSubtitle}>Manage your tasks</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
+
+            {/* Reminders Card */}
+            <TouchableOpacity style={styles.card}>
+              <View style={[styles.cardIconContainer, { backgroundColor: '#FFF8E6' }]}>
+                <FontAwesome name="bell" size={24} color="#FFAB00" />
+              </View>
+              <Text style={styles.cardTitle}>Reminders</Text>
+              <Text style={styles.cardSubtitle}>Never miss a thing</Text>
+              <FontAwesome name="arrow-right" size={16} color="#666" style={styles.cardArrow} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
+const globalStyles = StyleSheet.create({
+  safeArea: {
+    // Add your global safe area styles here
+    flex: 1,
+  }
+});
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f9f9f9",
-    paddingHorizontal: 16,
+  scrollContent: {
+    padding: 20,
   },
+  
+  // Header
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eeeeee",
+    marginBottom: 25,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#333333",
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
   },
-  addButton: {
-    backgroundColor: "#4CAF50",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f9f9f9",
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: "#666666",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    backgroundColor: "#f9f9f9",
-    textAlign: "center",
-  },
-  errorText: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333333",
-  },
-  errorMessage: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#666666",
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  retryButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    textAlign: "center",
-  },
-  emptyTitle: {
-    marginTop: 20,
-    fontSize: 18,
-    fontWeight: "500",
-    color: "#333333",
-  },
-  emptySubtitle: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#666666",
-    marginBottom: 24,
-  },
-  primaryButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  primaryButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  listContent: {
-    paddingVertical: 16,
-  },
-  goalItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+  
+  // Notifications
+  notificationBar: {
+    backgroundColor: '#F5F7FA',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 25,
+    shadowColor: '#00000010',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
     shadowRadius: 4,
     elevation: 2,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#4CAF50",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    backgroundColor: "transparent",
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: "#4CAF50",
+  notificationTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
   },
-  goalDetails: {
-    flex: 1,
+  notificationsList: {
+    marginTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingTop: 15,
   },
-  goalTitle: {
+  notificationItem: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  notificationItemTitle: {
     fontSize: 16,
-    fontWeight: "500",
-    color: "#333333",
+    fontWeight: '500',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
-  completedGoalTitle: {
-    textDecorationLine: "line-through",
-    color: "#888888",
-  },
-  goalMeta: {
-    marginTop: 4,
-  },
-  creationDate: {
-    fontSize: 12,
-    color: "#666666",
-  },
-  goalDescription: {
+  notificationItemMessage: {
     fontSize: 14,
-    color: "#555555",
-    marginTop: 2,
-    fontStyle: "italic",
+    color: '#666',
   },
-  goalActions: {
-    flexDirection: "row",
-    gap: 12,
+  
+  // Cards layout
+  cardsContainer: {
+    gap: 15,
   },
-  editButton: {
-    padding: 4,
+  cardPair: {
+    flexDirection: 'row',
+    gap: 15,
   },
-  deleteButton: {
-    padding: 4,
+  card: {
+    flex: 1, // Equal width for paired cards
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 18,
+    shadowColor: '#00000015',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  cardIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 5,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 15,
+  },
+  cardArrow: {
+    alignSelf: 'flex-end',
   },
 });
 
-export default HomeScreen;
+
+
+
+const Tab = createBottomTabNavigator();
+
+export default function App() {
+
+  return (
+    <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: {
+            backgroundColor: '#ffffffff',
+            borderTopColor: '#333333ff',
+            paddingBottom: Platform.OS === 'ios' ? 15 : 5,
+            paddingTop: Platform.OS === 'ios' ? 15 : 5,
+          },
+          tabBarActiveTintColor: '#3B82F6',
+          tabBarInactiveTintColor: '#9CA3AF',
+          headerShown: false
+        }}
+      >
+        <Tab.Screen 
+          name="Home" 
+          component={HomeScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="home" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Goal" 
+          component={GoalScreen} 
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="bullseye" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Stats" 
+          component={GoalStatistics} 
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="bar-chart" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tab.Screen 
+          name="More" 
+          component={MenuScreen} 
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="list" size={size} color={color} />
+            ),
+          }}
+        />
+
+
+
+    </Tab.Navigator>
+  );
+}

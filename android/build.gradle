@@ -1,5 +1,4 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
     ext {
         buildToolsVersion = "35.0.0"
@@ -9,6 +8,7 @@ buildscript {
         ndkVersion = "26.1.10909125"
         kotlinVersion = "2.0.21"
         expoModulesCoreVersion = "1.3.7"
+        frescoVersion = "2.6.0" // Add Fresco version (fixes unresolved variable in app/build.gradle)
     }
     repositories {
         google()
@@ -18,9 +18,11 @@ buildscript {
         classpath('com.android.tools.build:gradle')
         classpath('com.facebook.react:react-native-gradle-plugin')
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath 'com.google.gms:google-services:4.4.3' // Move Google Services here (remove duplicate top-level plugin)
     }
 }
 
+// Resolve React Native Android directory via Node (preserved from original)
 def reactNativeAndroidDir = new File(
     providers.exec {
         workingDir(rootDir)
@@ -41,25 +43,18 @@ allprojects {
     }
 }
 
-// 保持原有配置不变，在文件末尾添加以下内容
-
-// 强制所有模块统一JVM目标版本
-// 保持原有配置不变，修改subprojects部分如下
-
+// Force consistent JVM target version across all Android modules (cleaned up for clarity)
 subprojects {
     afterEvaluate { project ->
         if (project.hasProperty("android")) {
-            // 统一Java编译版本（所有Android模块都需要）
+            // Unify Java compile version for all Android modules
             android {
                 compileOptions {
                     sourceCompatibility JavaVersion.VERSION_17
                     targetCompatibility JavaVersion.VERSION_17
                 }
-            }
-            
-            // 仅对包含Kotlin的模块应用kotlinOptions
-            if (project.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
-                android {
+                // Only apply Kotlin options if the module uses Kotlin
+                if (project.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
                     kotlinOptions {
                         jvmTarget = "17"
                         freeCompilerArgs += "-Xjvm-default=all-compatibility"
@@ -70,7 +65,6 @@ subprojects {
     }
 }
 
-
-// 应用全局插件
+// Apply global Expo and React Native root plugins (preserved)
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"

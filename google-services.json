@@ -14,7 +14,23 @@
       },
       "oauth_client": [
         {
-          "client_id": "337695431184-vkr2gvrvtqolcm4cao5qto0idbu1ilou.apps.googleusercontent.com",
+          "client_id": "337695431184-c4mhdi2o6vcfkc0vov9p5580h229gn7j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yrsdaily.unione",
+            "certificate_hash": "45947a11ee78d839f129f4e08c231de1a1528dff"
+          }
+        },
+        {
+          "client_id": "337695431184-rslcc762u1fsdhfsfajs8tjjccmq3j50.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yrsdaily.unione",
+            "certificate_hash": "a40f804e568661b4eb459e5d6f8c8db88a682a8d"
+          }
+        },
+        {
+          "client_id": "337695431184-us3qjp2v8idj9pm800ggmp1h5o81c44c.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.yrsdaily.unione",

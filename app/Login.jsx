@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
@@ -9,8 +10,13 @@ import { auth, redirectUri } from "./service/firebase";
 // Clear browser cache to prevent sign-in issues
 WebBrowser.maybeCompleteAuthSession();
 
+
+
+
+
+
 const LoginScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useRouter();
   const [loading, setLoading] = useState(false);
   
   // Configure Google auth request
@@ -40,7 +46,7 @@ const LoginScreen = () => {
       const credential = GoogleAuthProvider.credential(idToken);
       await signInWithCredential(auth, credential);
       // Navigate to home screen on success
-      navigation.navigate("Home");
+      navigation.replace('/Home');
     } catch (error) {
       console.error("Firebase sign-in error:", error);
       Alert.alert("Login Failed", "Could not connect to your account. Please try again.");
