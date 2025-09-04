@@ -5,8 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { auth } from "./service/firebase";
-
+import { auth, redirectUri } from "./service/firebase";
 // Clear browser cache to prevent sign-in issues
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,7 +16,9 @@ const LoginScreen = () => {
   // Configure Google auth request
   const [request, response, promptAsync] = Google.useAuthRequest({
      // From Google Cloud Console
+    androidClientId: "337695431184-rslcc762u1fsdhfsfajs8tjjccmq3j50.apps.googleusercontent.com",
     webClientId: "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com", 
+    redirectUri: redirectUri,
      // From Google Cloud Console
   });
 

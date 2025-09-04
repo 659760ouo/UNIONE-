@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import SwipeDot from '../assets/components/SwipeDot'; // 确保路径正确
 
+
 const { width } = Dimensions.get('window');
 
 // 引导页数据

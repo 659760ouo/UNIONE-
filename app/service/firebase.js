@@ -1,6 +1,9 @@
+import { makeRedirectUri } from 'expo-auth-session';
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+
+
 
 // Explicitly provide your Firebase config (from Firebase Console)
 const firebaseConfig = {
@@ -20,3 +23,8 @@ console.log("✅ Firebase app connected successfully! App name:", app.name);
 // Export services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+export const redirectUri = makeRedirectUri({
+  // Let Expo handle the redirect URI automatically
+  useProxy: true, // This enables Expo's proxy to avoid local IP issues
+});

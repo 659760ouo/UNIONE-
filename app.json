@@ -18,8 +18,10 @@
         "foregroundImage": "",
         "backgroundColor": "#ffffff"
       },
+      
       "edgeToEdgeEnabled": true,
-      "package": "com.yrsdaily.unione"
+      "package": "com.yrsdaily.unione",
+      "permissions": ["INTERNET"]
     },
     "web": {
       "bundler": "metro",
