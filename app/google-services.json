@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "337695431184",
+    "project_id": "goaltracker-32d4c",
+    "storage_bucket": "goaltracker-32d4c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:337695431184:android:c280c68c777f3e96fa4895",
+        "android_client_info": {
+          "package_name": "com.yrsdaily.unione"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yrsdaily.unione",
+            "certificate_hash": "8ec7a8e279f88a34ac6131f7ce81b0c470ea8c75"
+          }
+        },
+        {
+          "client_id": "337695431184-rslcc762u1fsdhfsfajs8tjjccmq3j50.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB53n534U40EJSHFmzZ51vEF2Db9tUtEO8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "337695431184-rslcc762u1fsdhfsfajs8tjjccmq3j50.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

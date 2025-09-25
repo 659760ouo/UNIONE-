@@ -1,9 +1,10 @@
 import { FontAwesome } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { makeRedirectUri } from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
     Animated,
     Dimensions,
     Easing,
@@ -15,10 +16,14 @@ import {
     View
 } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
+import { auth } from './firebase';
 import Log_style from './styles/Log_style';
 
 const google = require('../assets/images/google.png')
 const fb = require('../assets/images/facebook.png')
+
+
+
 
 
 const api = 'http://192.168.5.4:3000'
@@ -36,103 +41,75 @@ const LogPage = () => {
     const {width, height} = Dimensions.get('window')
 
 
-    const handlesignup = async () => {
-        try {
-            const response = await fetch(`${api}/api/signup`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password,
-                username: username
-            })
-            });
+    const EXPO_USERNAME = "yrsdaily"; // Replace with your actual username
 
-            const data = await response.json();
-            if (!data.errors){
-                console.log('Signup response:', data);
-            }
-            else{
-                addAlert('Invalid Registration, Please make sure you fulfill the registration requirement!')
-            }
+// Get project slug from app.json (must match exactly)
+    const PROJECT_SLUG = "yrsdaily"; // Replace with your actual project slug
 
-            if (data.token) {
-                try {
-                    await AsyncStorage.setItem('auth_token', data.token);
-                    const profile = await fetch(`${api}/api/profile` , {
-                        method: 'GET',
-                        headers: {
-                           'Authorization': `Bearer ${data.token}`,
-                           'Content-Type': 'application/json'
-                        }
-                    })
-                    const user = profile.json()
-                    GoHome([user.username]);
-                }catch(error){
-                    console.log('Failed to fetch the profile', error)
-                }
-            } else {
-                setError(data.error || 'No token received');
-            }
-        } catch (error) {
-            setError('Network error occurred');
-        }
-    };
-
-    const addAlert = (msg) => {
-        Alert.alert('Error', msg ,[
-            {
-                text : 'OK',
-                onPress: () => console.log('OK button Pressed !') 
-            }
-            
-        ])
+// Manually construct the auth.expo.io URI instead of using proxy (convert 192.16... to auth.expo.io)
+    const getExpoProxyUri = () => {
+    // For development with Expo Go
+    if (__DEV__) {
+        return `https://auth.expo.io/@${EXPO_USERNAME}/${PROJECT_SLUG}`;
     }
+    // For production (optional)
+    return makeRedirectUri({
+        native: "com.yrsdaily.unione:/oauthredirect",
+        });
+    }
+// Initialize with the explicit URI
+    const redirectUri = getExpoProxyUri();
+    console.log("Final Redirect URI:", redirectUri);
 
-    const handlesignin= async () => {
-        try {
-            const log_response = await fetch(`${api}/api/signin`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                logID : logID,
-                password: logPassword
-            })
-            });
+    // Initialize Google auth request
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        // Use the WEB client ID from google-services.json (client_type: 3) to match for web redirect uri( not android!!!)
+        clientId: "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
+        iosClientId: "139581308140-imf4dv4bogf4aj945eosqvnett4mp06e.apps.googleusercontent.com",
+        webClientId: "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
+        
+        redirectUri: redirectUri,
+        // profile: ['profile', 'email'],
+    }); 
+    console.log("Auth Request:", request);
+    console.log("Response:", response);
+    // Handle authentication response
 
-            const data = await log_response.json();
-            if (data.message){
-                console.log('error:', data.message)
-            }
-            console.log('Sign In response:', data);
-
-            if (data.token) {
-                try {
-                    await AsyncStorage.setItem('auth_token', data.token);
-                    const log_user = await fetch(`${api}/api/profile` , {
-                        method: 'GET',
-                        headers: {
-                           'Authorization': `Bearer ${data.token}`,
-                           'Content-Type': 'application/json'
-                        }
-                    })
-                    const logUser = log_user.json()
-                    GoHome([logUser.username]);
-                }catch(error){
-                    console.log('Failed to fetch the profile', error)
-                }
-            } else {
-                setError(data.error || 'No token received');
-            }
-        } catch (error) {
-            setError('Network error occurred');
+    const repsonseUnchange = () => {
+        if (response == null){
+            console.log("Response unchanged", response);
+        }else{ 
+            console.log("Response changed", response);
         }
-    };
+        
+    }
+    useEffect(() => {
+        console.log("Google Sign-In response:", response);
+        if (response?.type === "success") {
+        
+        const { id_token } = response.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+        // Sign in with Firebase
+        signInWithCredential(auth, credential)
+            .then((userCredential) => {
+            console.log("Successfully signed in:", userCredential.user.displayName);
+            GoHome()
+            // Handle post-sign-in actions (e.g., navigation)
+            })
+            .catch((error) => {
+            console.error("Sign-in error:", error.message);
+            });
+        }else if(response?.type === "error"){
+            console.error("Sign-in error:", response.error);
+        }
 
+    }, [response]);
+    console.log('Request object:', request);
+    console.log('Response object:', response);
+    console.log('Prompt Async function:', promptAsync);
+
+
+    
     const GoHome = (user) => {
         navigation.navigate('Home')
     }
@@ -247,8 +224,12 @@ const LogPage = () => {
                             <View style={Log_style.icon_container}>
                                 <View style={[Log_style.iconView, , {borderLeftWidth: 3, borderColor: 'black'}]}> 
                                     <Pressable>
-
-                                        <TouchableOpacity>
+                                      
+                                        <TouchableOpacity onPress={() => {
+                                            console.log("Prompting Google Sign-In...");
+                                            promptAsync({redirectUri: redirectUri, showInRecents: true});
+                                            repsonseUnchange();
+                                        }}>
                                             <Image style={
 
                                                 Log_style.icon} 
