@@ -14,7 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
+          "client_id": "337695431184-vkr2gvrvtqolcm4cao5qto0idbu1ilou.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.yrsdaily.unione",
@@ -22,7 +22,7 @@
           }
         },
         {
-          "client_id": "337695431184-rslcc762u1fsdhfsfajs8tjjccmq3j50.apps.googleusercontent.com",
+          "client_id": "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -35,7 +35,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "337695431184-rslcc762u1fsdhfsfajs8tjjccmq3j50.apps.googleusercontent.com",
+              "client_id": "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

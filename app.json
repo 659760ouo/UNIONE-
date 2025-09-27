@@ -2,11 +2,11 @@
   "expo": {
     "name": "yrsdaily",
     "slug": "yrsdaily",
-
+    // "scheme": "com.yrsdaily.unione",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.yrsdaily.unione",
+    
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -19,7 +19,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yrsdaily.unione",
+      "package": "com.yrsdaily.unione"
 
     },
     "web": {
@@ -45,7 +45,8 @@
         "expo-build-properties",
         {
           "android": {
-            "googleServicesFile": "./app/google-services.json"
+            "googleServicesFile": "./app/google-services.json",
+            
           }
         }
       ],

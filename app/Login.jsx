@@ -1,7 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as AuthSession from 'expo-auth-session';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -19,12 +21,10 @@ import { TextInput } from 'react-native-gesture-handler';
 import { auth } from './firebase';
 import Log_style from './styles/Log_style';
 
+WebBrowser.maybeCompleteAuthSession();
+
 const google = require('../assets/images/google.png')
 const fb = require('../assets/images/facebook.png')
-
-
-
-
 
 const api = 'http://192.168.5.4:3000'
 
@@ -41,6 +41,15 @@ const LogPage = () => {
     const {width, height} = Dimensions.get('window')
 
 
+
+
+    const expoGeneratedUri = AuthSession.makeRedirectUri(  {useproxy: true}); // The auth.expo.io one
+    const expoLocalUri = AuthSession.makeRedirectUri({ useproxy: false }); // The localhost one
+
+    console.log('Expo Proxy URI (for Google Console):', expoGeneratedUri); 
+    // Example: https://auth.expo.io/@your-username/your-app-slug
+    console.log('Expo Local URI (for Expo to listen to):', expoLocalUri);   
+
     const EXPO_USERNAME = "yrsdaily"; // Replace with your actual username
 
 // Get project slug from app.json (must match exactly)
@@ -54,7 +63,7 @@ const LogPage = () => {
     }
     // For production (optional)
     return makeRedirectUri({
-        native: "com.yrsdaily.unione:/oauthredirect",
+        native: "com.yrsdaily.unione://oauthredirect",
         });
     }
 // Initialize with the explicit URI
@@ -67,10 +76,18 @@ const LogPage = () => {
         clientId: "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
         iosClientId: "139581308140-imf4dv4bogf4aj945eosqvnett4mp06e.apps.googleusercontent.com",
         webClientId: "337695431184-ag60ocgirrlnkhe7ndfqlil7u2i4j768.apps.googleusercontent.com",
+        androidClientId: "337695431184-vkr2gvrvtqolcm4cao5qto0idbu1ilou.apps.googleusercontent.com",
         
-        redirectUri: redirectUri,
-        // profile: ['profile', 'email'],
-    }); 
+        useproxy: true,
+        scopes: ['openid', 'profile', 'email'], //  data for access token 
+        responseType: "code",
+    },
+
+    {
+    authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth", // Google’s auth endpoint
+    tokenEndpoint: "https://oauth2.googleapis.com/token", // Google’s token endpoint}
+    }
+); 
     console.log("Auth Request:", request);
     console.log("Response:", response);
     // Handle authentication response
