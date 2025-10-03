@@ -11,6 +11,7 @@ const firebaseConfig = {
   storageBucket: "goaltracker-32d4c.firebasestorage.app",
   messagingSenderId: "337695431184",
   appId: "1:337695431184:android:c280c68c777f3e96fa4895",
+  
 };
 
 // 1. Initialize Firebase app FIRST
@@ -27,3 +28,5 @@ console.log("Firebase Auth Ready:", auth ? "Yes" : "No");
 
 // Export for use in other components
 export const getFirebaseAuth = () => auth;
+
+export default null;

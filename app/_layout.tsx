@@ -11,6 +11,22 @@ const Stack = createStackNavigator();
 
 const api = 'http://192.168.5.4:3000'
 
+useEffect(() => {
+  const checkOauthToken = async () => {
+    const token = await AsyncStorage.getItem('oauthToken');
+    if (token) {
+      console.log('OAuth token found!');
+      await AsyncStorage.setItem('auth_token', token);
+
+    }
+  };
+  checkOauthToken();
+
+}, []);
+
+
+
+
 const isTokenExpired = (token) => {
   if (!token) return true; // Treat empty token as expired
 

@@ -120,3 +120,5 @@ export const chartStyles = {
     }
   }
 };
+
+export default null;
