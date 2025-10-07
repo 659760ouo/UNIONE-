@@ -16,12 +16,18 @@ import GoalScreen from './Goal';
 import MenuScreen from './Menu';
 import GoalStatistics from './Stats';
 
+
+
+
 const api = 'http://192.168.5.4:3000'
 
 export const HomeScreen = () => {
   const navigation = useNavigation();
   const [notificationsExpanded, setNotificationsExpanded] = useState(false);
   const [username, setUsername] = useState(''); // Moved state inside component
+  const [email, setEmail] = useState(''); // Moved state inside component
+  
+  
 
   const notifications = [
     { id: 1, title: "New study reminder", message: "Math test tomorrow at 9 AM" },
@@ -30,46 +36,20 @@ export const HomeScreen = () => {
   ];
 
   
-
-  const post_username = (user) => {
-    setUsername(user);
-  };
-
-  const get_user = async () => {
-    try {
-      const token = await AsyncStorage.getItem('auth_token');
-      
-      if (!token) {
-        console.log('Failed to extract token');
-        return;
+  useEffect(() => async () => {
+    
+    console.log('HomeScreen mounted');
+    await AsyncStorage.getItem('g_user').then((value) => {
+      if (value) {
+        const user = JSON.parse(value);
+        setUsername(user.name || ''); // Safely access name
+        setEmail(user.email || ''); // Safely access email
+        console.log('Username set from storage:', user.name);
+      } else {
+        console.log('No g_user found in storage');
       }
-      
-      console.log('Extracted token successfully');
-      const response = await fetch(`${api}/api/profile`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const user_get = await response.json();
-      post_username(user_get.username);
-      await AsyncStorage.setItem('un', user_get.username)
-      await AsyncStorage.setItem('em', user_get.email)
-      console.log('Username:', username);
-      console.log('User data:', user_get);
-    } catch (error) {
-      console.log('Home screen failed to request username', error);
-    }
-  };
+  })}, []);
 
-  // Use useEffect to call async function once on mount
-  useEffect(() => {
-    get_user();
-
-  }, []
-);
 
 
 
@@ -278,6 +258,9 @@ const styles = StyleSheet.create({
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+
+  
+
 
   return (
     <Tab.Navigator

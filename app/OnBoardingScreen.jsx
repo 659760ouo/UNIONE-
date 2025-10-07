@@ -1,18 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import React, { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
   Animated,
+  Dimensions,
+  Image,
   SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import SwipeDot from '../assets/components/SwipeDot'; // 确保路径正确
-import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 

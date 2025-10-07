@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -47,18 +47,14 @@ const LogPage = () => {
     const GITHUB_HTML_URL = "https://659760ouo.github.io/GoogleAuth/google-auth";
     const GOOGLE_CLIENT_ID = "337695431184-dc7665df4vkl4m0dj5vbqmbsu4mc7j87.apps.googleusercontent.com";
     const GOOGLE_CLIENT_SECRET = "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";
-    const EXPO_DEV_URL = "exp://192.168.5.4:8081";
+    
 
 
-    useEffect(() => {
-        const getuser = () => {
-            console.log(guser)
-        }
-        getuser()
-    }, [guser])
+    
 
     // Open GitHub HTML page to start Google auth flow
     const openGithubAuthPage = async () => {
+        console.log("Starting Google authentication flow");
         setLoading(true);
         setError('');
 
@@ -67,6 +63,7 @@ const LogPage = () => {
 
         // Set 30-second timeout for authentication flow
         const newTimeout = setTimeout(() => {
+            console.log("Authentication timed out");
             setError("Authentication timed out. Please try again.");
             setLoading(false);
         }, 30000);
@@ -74,6 +71,7 @@ const LogPage = () => {
 
         try {
             // Open Google auth URL in browser
+            console.log(`Opening browser to Google auth URL`);
             await WebBrowser.openBrowserAsync(
                 `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_HTML_URL)}&response_type=code&scope=openid%20profile%20email`
                 
@@ -84,10 +82,13 @@ const LogPage = () => {
             setLoading(false);
             clearTimeout(newTimeout);
         }
+        console.log("Browser opened, waiting for user to complete authentication");
+        checkForCode();
     };
 
     // Handle received Google authorization code
     const handleGoogleCode = async (code) => {
+        console.log("Handling Google authorization code:", code);
         if (!code) return;
 
         // Clear timeout - we received the code
@@ -96,6 +97,7 @@ const LogPage = () => {
         setLoading(true);
         setError('');
         try {
+            console.log("Received Google authorization code:", code);
             // Exchange code for Google ID token
             const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
                 method: "POST",
@@ -110,7 +112,7 @@ const LogPage = () => {
             });
 
             const tokenData = await tokenResponse.json();
-            console.log(tokenData)
+            console.log("Received token data from Google:", tokenData);
             if (tokenData.error) {
                 throw new Error(`Google error: ${tokenData.error_description || tokenData.error}`);
             }
@@ -119,20 +121,31 @@ const LogPage = () => {
                 throw new Error("No ID token received from Google");
             }
 
+            // Save token for future API calls (implement your storage solution)
+            console.log("Storing OAuth token");
+            await AsyncStorage.setItem('oauthToken', tokenData.id_token);
+
             // Sign in to Firebase with Google credential
             const credential = GoogleAuthProvider.credential(tokenData.id_token);
             const google_user = await signInWithCredential(auth, credential);
+            console.log(google_user)
             if (!google_user) {
                 throw new Error("Firebase sign-in failed");
             }else{
-                setGuser({ name: google_user.user.displayName, email: google_user.user.email, expiry: '' });
+                
+                await AsyncStorage.setItem('g_user',
+                     JSON.stringify({ 
+                        name: google_user.user.displayName, 
+                        email: google_user.user.email, 
+                        
+                    }));
                 console.log('Signed in to firebase successfully',guser)
             }
             
             console.log("Google sign-in successful", credential);
 
             // Store token and navigate to home
-            AsyncStorage.setItem('oauthToken', tokenData.id_token);
+            
             
             navigation.navigate('Home');
         } catch (err) {
@@ -144,9 +157,10 @@ const LogPage = () => {
     };
 
     // Listen for deep links containing authorization code
-    useEffect(() => {
-        const checkForCode = async () => {
+    
+        const checkForCode =  async () => {
             // Check initial URL when app opens
+            console.log('Checking for auth code in initial URL');
             const initialUrl = await Linking.getInitialURL();
             if (initialUrl) {
                 const parsedUrl = Linking.parse(initialUrl);
@@ -169,8 +183,7 @@ const LogPage = () => {
             return () => Linking.removeEventListener("url", handleUrl);
         };
 
-        checkForCode();
-    }, [isAuth]);
+  
 
     // Cleanup timeout on component unmount
     useEffect(() => {
@@ -189,54 +202,9 @@ const LogPage = () => {
         }).start();
     }, [ActiveView]);
 
-    // Email/Password Sign In
-    const handlesignin = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            if (!logID || !logPassword) throw new Error('Please fill in all fields');
-            
-            const userCredential = await signInWithEmailAndPassword(auth, logID, logPassword);
-            navigation.navigate('Home');
-        } catch (err) {
-            setError(getFriendlyError(err.code));
-            console.error('Sign-in error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Email/Password Sign Up
-    const handlesignup = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            if (!username || !email || !password) throw new Error('Please fill in all fields');
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Invalid email format');
-            if (password.length < 8) throw new Error('Password must be at least 8 characters');
-
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await userCredential.user.updateProfile({ displayName: username });
-            navigation.navigate('Home');
-        } catch (err) {
-            setError(getFriendlyError(err.code));
-            console.error('Sign-up error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Helper for user-friendly error messages
-    const getFriendlyError = (code) => {
-        switch (code) {
-            case 'auth/invalid-email': return 'Invalid email format';
-            case 'auth/user-not-found': return 'No account found with this email';
-            case 'auth/wrong-password': return 'Incorrect password';
-            case 'auth/email-already-in-use': return 'Email already registered';
-            case 'auth/weak-password': return 'Password is too weak';
-            default: return 'Authentication failed. Please try again.';
-        }
-    };
+  
+    
+   
 
     return (
         <SafeAreaView style={Log_style.container}>
@@ -313,12 +281,12 @@ const LogPage = () => {
                     ) : (
                         <>
                             {ActiveView === 'Login' && (
-                                <TouchableOpacity onPress={handlesignin}>
+                                <TouchableOpacity onPress={''}>
                                     <Text style={Log_style.LR_txt}>Login</Text>
                                 </TouchableOpacity>
                             )}
                             {ActiveView === 'Register' && (
-                                <TouchableOpacity onPress={handlesignup}>
+                                <TouchableOpacity onPress={''}>
                                     <Text style={Log_style.LR_txt}>Register</Text>
                                 </TouchableOpacity>
                             )}
@@ -336,7 +304,8 @@ const LogPage = () => {
                             <View style={Log_style.icon_container}>
                                 <View style={[Log_style.iconView, { borderLeftWidth: 3, borderColor: 'black' }]}>
                                     <TouchableOpacity 
-                                        onPress={openGithubAuthPage}
+                                        onPress={
+                                            openGithubAuthPage}
                                         disabled={loading}
                                     >
                                         <Image style={Log_style.icon} source={google} />

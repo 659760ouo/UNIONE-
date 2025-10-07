@@ -16,5 +16,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "app/layout.js", "auth-backend/server.js", "auth-backend/server.js", "metro.config.js"  ]
+, "app/layout.js", "auth-backend/server.js", "auth-backend/server.js", "metro.config.js", "app/Study.jsx", "app/Login.jsx"  ]
 }

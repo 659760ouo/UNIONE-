@@ -14,8 +14,8 @@ import {
   View
 } from 'react-native';
 
-import styles from '../app/styles/Study_style';
 import UniversalManageModal from './MangModal'; // Import the universal modal
+import styles from './styles/Study_style';
 
 // Type definitions
 type Book = {
@@ -115,7 +115,7 @@ const StudyArea = () => {
     };
   }, []);
 
-  // Update timer when selected book or its timer state changes
+  // Update timer when selected book or its timer state changes, means: switching books will pause previous timer and start new one if active
   useEffect(() => {
     // Clear existing timer
     if (timerRef.current) {

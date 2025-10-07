@@ -15,9 +15,12 @@ useEffect(() => {
   const checkOauthToken = async () => {
     const token = await AsyncStorage.getItem('oauthToken');
     if (token) {
-      console.log('OAuth token found!');
+      console.log('OAuth token found!', token);
       await AsyncStorage.setItem('auth_token', token);
-
+      
+    }
+    else {
+      console.log('No OAuth token found');
     }
   };
   checkOauthToken();

@@ -111,3 +111,5 @@ export const goalService = {
 
 
 };
+
+export default null;
